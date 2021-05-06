@@ -1,0 +1,34 @@
+{
+  "name": "preporter",
+  "version": "1.0.4",
+  "description": "A tool that can detect java script errors and generate reports.",
+  "bin": {
+    "reporter": "./index.js"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "@vue/cli-plugin-eslint": "^4.5.12",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.25.0",
+    "eslint-config-vue": "^2.0.2",
+    "eslint-plugin-vue": "^7.9.0",
+    "vue-eslint-parser": "^7.6.0",
+    "eslint-formatter-pretty": "^4.0.0"
+  },
+  "files":[
+    ".eslintignore",
+    "config.js",
+    "package.json",
+    "index.js",
+    "template.html",
+    "README.md",
+    "demo.png"
+  ],
+  "author": "laitingyou@outlook.com",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

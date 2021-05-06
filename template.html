@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+	<title>代码扫描平台</title>
+	<script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.9/vue.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/view-design/dist/styles/iview.css">
+	<script type="text/javascript" src="https://unpkg.com/view-design/dist/iview.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/numeral/numeral.js"></script>
+	<script src="https://cdn.bootcdn.net/ajax/libs/v-charts/1.19.0/pie.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/v-charts-v2/lib/index.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/v-charts-v2/lib/style.min.css">
+	
+	<style>
+		#app{
+			padding: 8px;
+		}
+		.code {
+			overflow: scroll;
+			color: #fff;
+			background: #000;
+			padding: 10px;
+		}
+		.info{
+			padding-top: 20px;
+			display: flex;
+			justify-content: space-around;
+		}
+	</style>
+</head>
+<body>
+	<div id="app">
+		<h2 style="text-align: center;">项目报告</h2>
+		<div class="info">
+			<i-form class="search-form" ref="info" :model="info"  :label-width="120">
+		        <form-item  style="width:500px" prop="name" label="项目名称">
+		            <i-input disabled v-model="info.name" placeholder="项目名称"></i-input>
+		        </form-item>
+		        <form-item  style="width:500px" prop="total" label="错误数量">
+		            <i-input disabled  v-model="info.total" placeholder="错误数量"></i-input>
+		        </form-item>
+		        <form-item  style="width:500px" prop="errors" label="Error级别">
+		            <i-input disabled v-model="info.errors" placeholder="Error级别"></i-input>
+		        </form-item>
+		        <form-item  style="width:500px" prop="warnings" label="Warning级别">
+		            <i-input disabled v-model="info.warnings" placeholder="Warning级别"></i-input>
+		        </form-item>
+		    </i-form>
+			<ve-pie width="500px" :data="chartData" :settings="chartSettings" :colors="['#F8777A', '#FCB954']" ></ve-pie>
+		</div>
+		 <i-form class="search-form" ref="formInline" :model="formInline"  inline :label-width="80">
+	        <form-item  style="width:200px" prop="level" label="错误级别">
+	            <i-select v-model="formInline.level">
+	            	<i-option :value="null">全部</i-option>
+	                <i-option value="error">error</i-option>
+	                <i-option value="warning">warning</i-option>
+	            </i-select>
+	        </form-item>
+	        <form-item  style="width:300px" prop="keywords" label="关键字">
+	            <i-input type="keywords" v-model="formInline.keywords" placeholder="关键字">
+	            </i-input>
+	        </form-item>
+	        <form-item  style="width:400px">
+	            <i-button type="primary" @click="search(formInline)">搜索</i-button>
+	            <span>搜索结果：{{data.length}} 条</span>
+	        </form-item>
+	    </i-form>
+		<i-table height="700" :columns="columns" :data="data"></i-table>
+	</div>
+	<script>
+		// Vue.use(VeIndex)
+		const errors = $errors$;
+		const warnings = $warning$;
+		new Vue({
+	        el: '#app',
+	        components: {
+	        	VePie
+	        },
+	        data: {
+	        	info: {
+	        		name: '$name$',
+	        		total: errors.length + warnings.length,
+	        		errors: errors.length,
+	        		warnings: warnings.length
+	        	},
+	        	formInline: {
+                    level: null,
+                    keywords: ''
+                },
+	        	columns: [
+                    {
+                        title: '类型',
+                        key: 'type',
+                        width: 120,
+                        render(h, param){
+                        	return h('tag', { props: { color: 'primary'}}, param.row.type )
+                        }
+                    },
+                    {
+                        title: '级别',
+                        key: 'level',
+                        width: 120,
+                        render(h, param){
+                        	return h('tag', { props: { color: param.row.level}}, param.row.level )
+                        }
+                    },
+                    {
+                        title: '错误信息',
+                        key: 'message'
+
+                    },
+                    {
+                        title: '详情',
+                        key: 'detail',
+                        render(h, param){
+                        	return h('pre', { class: 'code' }, param.row.detail )
+                        }
+                    }
+                ],
+                data: [],
+                chartSettings: { type: 'pie'  },
+                chartData: {
+                	columns: ['key', 'value'],
+			        rows: [
+				          { 'key': '错误数量',  value: errors.length},
+				          { 'key': '警告数据', value: warnings.length},
+				        ]
+                }
+	        },
+	        mounted(){
+	        	const errorArr = errors.map(function(e){
+	        		const arr = e.split('\n')
+	        		return {
+	        			massage: arr[0].replace(/error\:/, '').replace(/\sat.*$/, ''),
+	        			level: 'error',
+	        			detail: e
+	        		}
+	        	})
+	        	const warningArr = warnings.map(function(e){
+	        		const arr = e.split('\n')
+	        		return {
+	        			massage: arr[0].replace(/warning\:/, '').replace(/\sat.*$/, ''),
+	        			level: 'warning',
+	        			detail: e
+	        		}
+	        	})
+	        	this.allData = errorArr.concat(warningArr).map(function(e){
+	        		return {
+	        			type: 'javascript',
+                        level: e.level,
+                        message: e.massage,
+                        detail: e.detail
+	        		}
+	        	})
+	        	this.data = this.allData
+	        },
+	        methods: {
+	            search(formInline){
+	            	this.data = this.allData.filter(function(e){
+	            		if(formInline.keywords){
+	            			if(formInline.level){
+	            				return formInline.level === e.level && e.message.indexOf(formInline.keywords) > -1
+	            			}
+	            			return e.message.indexOf(formInline.keywords) > -1
+	            		}
+	            		if(formInline.level){
+	            			return formInline.level === e.level
+	            		}
+	            		return true
+		        	})
+	            }
+	        }
+    	})
+  	</script>
+</body>
+</html>
